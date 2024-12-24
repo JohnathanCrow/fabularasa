@@ -4,7 +4,7 @@ import os
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                            QHBoxLayout, QPushButton, QLineEdit, QLabel, 
                            QListWidget, QTabWidget)
-from PyQt6.QtGui import QIcon
+from PyQt6.QtGui import (QIcon, QFontDatabase, QFont)
 from PyQt6.QtCore import Qt
 from .book_table import BookListWidget
 from .styles import DARK_THEME
@@ -17,11 +17,12 @@ class BookClubWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("Fabula Rasa")
         self.setStyleSheet(DARK_THEME)
-        self.setMinimumSize(800, 600)
+        self.setMinimumSize(910, 810)
+        
 
         current_dir = os.path.dirname(os.path.abspath(__file__))
         parent_dir = os.path.dirname(current_dir)
-        icon_path = os.path.join(parent_dir, "assets", "icon.ico")
+        icon_path = os.path.join(parent_dir, "assets", "icon.png")
         
         if os.path.exists(icon_path):
             self.setWindowIcon(QIcon(icon_path))
@@ -37,8 +38,21 @@ def create_main_layout(book_manager, window):
     main_widget = QWidget()
     layout = QVBoxLayout(main_widget)
     
+    # Load the custom font
+    font_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "CinzelDecorative.ttf")
+    if os.path.exists(font_path):
+        font_id = QFontDatabase.addApplicationFont(font_path)
+        if font_id != -1:
+            font_family = QFontDatabase.applicationFontFamilies(font_id)[0]
+        else:
+            print(f"Failed to load font: {font_path}")
+            font_family = "Default Font"  # Fallback
+    else:
+        print(f"Font file not found: {font_path}")
+        font_family = "Default Font"  # Fallback
+
     header = QLabel("Fabula Rasa")
-    header.setStyleSheet("font-size: 24px; font-weight: bold; margin: 10px; font-family: serif;")
+    header.setStyleSheet(f"font-size: 30px; font-weight: bold; margin: 10px; font-family: '{font_family}';")
     header.setAlignment(Qt.AlignmentFlag.AlignCenter)
     layout.addWidget(header)
     
@@ -72,7 +86,7 @@ def create_left_column(book_manager):
     layout = QVBoxLayout(left_column)
     
     book_manager.book_input = QLineEdit()
-    book_manager.book_input.setPlaceholderText("Enter title...")
+    book_manager.book_input.setPlaceholderText("Enter title/ISBN...")
     book_manager.author_input = QLineEdit()
     book_manager.author_input.setPlaceholderText("Enter author...")
     book_manager.word_count_input = QLineEdit()

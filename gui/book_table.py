@@ -55,16 +55,16 @@ class BookListWidget(QWidget):
         layout.addWidget(self.selected_table)
         
         button_layout = QHBoxLayout()
+        remove_btn = QPushButton("Remove Entry")
+        remove_btn.clicked.connect(self._remove_selected)
+        add_btn = QPushButton("Add Entry")
+        add_btn.clicked.connect(self._add_row)
         save_btn = QPushButton("Save Changes")
         save_btn.clicked.connect(self._save_changes)
-        remove_btn = QPushButton("Remove Selected")
-        remove_btn.clicked.connect(self._remove_selected)
-        add_btn = QPushButton("Add Row")
-        add_btn.clicked.connect(self._add_row)
         
-        button_layout.addWidget(save_btn)
         button_layout.addWidget(remove_btn)
         button_layout.addWidget(add_btn)
+        button_layout.addWidget(save_btn)
         layout.addLayout(button_layout)
         
     def _save_changes(self):

@@ -20,8 +20,11 @@ A book club app that uses an algorithm to select the best candidate for the next
 
 #### Configuration
 - Adjust the algorithm settings
-- Rating baseline sets the star rating that equals 0 points (lower and higher subtracts or adds points)
-- Rating multiplier is the factor to multiply by (e.g., 10 is 1 point per 0.1 rating / 3 stars = 30 points)
-- Target wordcount sets the ideal number of words that equals 0 points (lower and higher subtracts points)
-- Penalty step is how many words to apply a 1 point pentalty (every X number of words outside of target subtracts 1 point)
-- Penalty 1, 2, and 3 subtracts points based on which member selected recent books (1 being the most recent)
+- Rating Multiplier is the factor to multiply by
+  (10 is 1 point per 0.1 rating / 3 stars = 30 points)
+- Target Wordcount sets the ideal number of words that equals 0 points
+  (lower and higher than target wordcount will subtracts points)
+- Penalty Step is how many words outside target to apply a 1 point penalty
+  (every x number of words outside of target subtracts 1 point)
+- Penalty 1, 2, and 3 subtracts points based on who selected recent books
+  (1 being the most recent, 2 the second most, 3 the third most)
