@@ -90,17 +90,33 @@ class BookManager:
         """
         self.details_label.setText(details)
 
-# In gui/book_manager.py, update the add_book method:
+    def parse_word_count(self, word_count_str):
+        """Convert word count input like '50k' to numeric value."""
+        try:
+            if word_count_str.lower().endswith("k"):
+                return int(float(word_count_str[:-1]) * 1000)
+            return int(word_count_str)
+        except ValueError:
+            raise ValueError(f"Invalid word count format: {word_count_str}")
 
     def add_book(self):
         """Add a new book to the system."""
         try:
             query = self.book_input.text().strip()
-            word_count = self.word_count_input.text().strip()
+            word_count_str = self.word_count_input.text().strip()
             member = self.member_input.text().strip()
             
-            if not all([query, word_count, member]):
-                self.parent.statusBar().showMessage("Please fill in title/ISBN, word count, and member!", 3000)
+            if not all([query, word_count_str, member]):
+                self.parent.statusBar().setStyleSheet("color: red;")
+                self.parent.statusBar().showMessage("Fill in title/ISBN, word count, and member!", 6000)
+                return
+
+            # Convert word count
+            try:
+                word_count = self.parse_word_count(word_count_str)
+            except ValueError as e:
+                self.parent.statusBar().setStyleSheet("color: red;")
+                self.parent.statusBar().showMessage(str(e), 6000)
                 return
 
             metadata = self.goodreads_client.get_book_info(query)
@@ -121,7 +137,7 @@ class BookManager:
             else:
                 book_data = {
                     "title": query,
-                    "author": self.author_input.text().strip() or "Unknown Author",
+                    "author": self.author_input.text().strip() or "Unknown",
                     "length": word_count,
                     "rating": "0",
                     "member": member,
@@ -148,10 +164,11 @@ class BookManager:
             self.member_input.clear()
             self.book_input.setFocus()
             
-            self.parent.statusBar().showMessage("Book added successfully!", 3000)
+            self.parent.statusBar().setStyleSheet("color: green;")
+            self.parent.statusBar().showMessage("Book added successfully!", 6000)
         except Exception as e:
             print(f"Error adding book: {e}")  # Print error to console for debugging
-            self.parent.statusBar().showMessage(f"Error adding book: {str(e)}", 3000)
+            self.parent.statusBar().showMessage(f"Error adding book: {str(e)}")
         
     def select_book(self):
         """Select the next book for the club."""
@@ -178,4 +195,5 @@ class BookManager:
             if self.book_list_widget:
                 self.book_list_widget.load_books(books)
             
-            self.parent.statusBar().showMessage("New book selected!", 3000)
+            self.parent.statusBar().setStyleSheet("color: green;")
+            self.parent.statusBar().showMessage(" New book selected!", 6000)
