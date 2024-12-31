@@ -8,7 +8,7 @@ def calculate_rating_score(rating):
     """Calculate score component based on book rating."""
     config = load_config()
     try:
-        rating = float(rating)
+        rating = float(rating) if isinstance(rating, str) else rating
         difference_from_baseline = rating - config["rating"]["baseline"]
         return max(round(difference_from_baseline * config["rating"]["multiplier"]), 0)
     except (ValueError, TypeError):
@@ -29,7 +29,8 @@ def calculate_book_score(book):
     """Calculate total score for a single book."""
     rating_score = calculate_rating_score(book["rating"])
     length_score = calculate_length_score(book["length"])
-    return round(rating_score + length_score)
+    total_score = round(rating_score + length_score)
+    return total_score
 
 def calculate_scores(books):
     """Calculate and add scores for a list of books."""

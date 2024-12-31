@@ -125,21 +125,18 @@ class BookManager:
                     "title": metadata["title"],
                     "author": metadata["author"],
                     "length": word_count,
-                    "rating": str(metadata["rating"]),
+                    "rating": float(metadata["rating"]),  # Convert to float
                     "member": member,
                     "score": 0,
                     "date_added": get_current_date(),
                     "date_selected": ""
                 }
-                # Update the input fields to show what was found
-                self.book_input.setText(metadata["title"])
-                self.author_input.setText(metadata["author"])
             else:
                 book_data = {
                     "title": query,
                     "author": self.author_input.text().strip() or "Unknown",
                     "length": word_count,
-                    "rating": "0",
+                    "rating": 0.0,  # Use float instead of string
                     "member": member,
                     "score": 0,
                     "date_added": get_current_date(),

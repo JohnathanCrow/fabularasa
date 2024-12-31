@@ -23,3 +23,16 @@ def get_data_dir() -> str:
 def get_file_path(filename: str) -> str:
     """Get the full path for a data file."""
     return str(Path(get_data_dir()) / filename)
+
+def resource_path(relative_path: str) -> str:
+    """Get the absolute path to a resource, works both for development and PyInstaller."""
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        # Get the absolute path to the parent directory of 'utils'
+        base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    
+    full_path = os.path.join(base_path, relative_path)
+    # Convert to forward slashes and ensure it's absolute
+    return os.path.abspath(full_path).replace('\\', '/')

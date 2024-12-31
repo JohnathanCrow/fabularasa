@@ -80,15 +80,13 @@ class BookListWidget(QWidget):
                 book = {
                     "title": table.item(row, 0).text() if table.item(row, 0) else "",
                     "author": table.item(row, 1).text() if table.item(row, 1) else "",
-                    "length": table.item(row, 2).text() if table.item(row, 2) else "0",
-                    "rating": table.item(row, 3).text() if table.item(row, 3) else "0",
+                    "length": int(table.item(row, 2).text()) if table.item(row, 2) else 0,
+                    "rating": float(table.item(row, 3).text()) if table.item(row, 3) else 0.0,
                     "member": table.item(row, 4).text() if table.item(row, 4) else "",
-                    "score": "0",
+                    "score": 0,  # Numeric zero
                     "date_added": table.item(row, 5).text() if table.item(row, 5) else get_current_date(),
                     "date_selected": date_selected
                 }
-                if book["title"] and book["author"]:
-                    books.append(book)
         
         headers = ["title", "author", "length", "rating", "member", "score", 
                   "date_added", "date_selected"]
