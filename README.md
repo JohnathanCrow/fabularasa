@@ -1,5 +1,5 @@
 # Fabula Rasa
-![screenshot01](https://github.com/user-attachments/assets/7c701536-c48f-4433-a120-1505202a1641)
+![screenshot_home](https://github.com/user-attachments/assets/a09de5f6-1544-4ec4-b41d-0cf6a9462697)
 
 A book club app that uses a simple algorithm to select the best candidate for the next read, based on rating, target length, and who suggested recently selected books. Required fields are title or ISBN (more reliable) and wordcount, author will be pulled automatically and member will be skipped if not entered. 
 
