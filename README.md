@@ -35,5 +35,5 @@ A book club app that uses a simple algorithm to select the best candidate for th
   (1 being the most recent, 2 the second most, 3 the third most)
   
  #### Tips
-- Use solo by omitting member field, and setting member penalties to 0.
-- Use [this](https://www.howlongtoread.org) book wordcounts.
+- Use solo by omitting member field, and setting member penalties to 0
+- Use [this](https://www.howlongtoread.org) for book wordcounts
