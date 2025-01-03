@@ -3,13 +3,14 @@ import sys
 import os
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                            QHBoxLayout, QPushButton, QLineEdit, QLabel, 
-                           QListWidget, QTabWidget)
-from PyQt6.QtGui import (QIcon, QFontDatabase, QFont)
+                           QListWidget, QTabWidget, QCalendarWidget)
+from PyQt6.QtGui import (QIcon, QFontDatabase, QFont, QTextCharFormat)
 from PyQt6.QtCore import Qt
 from .book_table import BookListWidget
 from .styles import DARK_THEME
 from .book_manager import BookManager
 from utils.db import read_csv_file
+from utils.dates import get_next_monday
 from .config_tab import ConfigWidget
 
 class BookClubWindow(QMainWindow):
@@ -57,13 +58,13 @@ def create_main_layout(book_manager, window):
     layout.addWidget(header)
     
     tabs = QTabWidget()
-    tabs.addTab(create_selection_layout(book_manager), "Selection")
+    tabs.addTab(create_selection_layout(book_manager), "Home")
     
     book_list = BookListWidget()
     book_list.load_books(read_csv_file("books.csv"))
-    tabs.addTab(book_list, "Book List")
+    tabs.addTab(book_list, "Database")
     
-    tabs.addTab(ConfigWidget(window), "Configuration")
+    tabs.addTab(ConfigWidget(window), "Config")
     
     book_manager.book_list_widget = book_list
     
@@ -82,11 +83,15 @@ def create_selection_layout(book_manager):
 
 def create_left_column(book_manager):
     """Create the left column of the selection tab."""
+    from PyQt6.QtGui import QTextCharFormat
+    from PyQt6.QtCore import Qt
+
     left_column = QWidget()
     layout = QVBoxLayout(left_column)
     
+    # Book input fields
     book_manager.book_input = QLineEdit()
-    book_manager.book_input.setPlaceholderText("Enter title/ISBN...")
+    book_manager.book_input.setPlaceholderText("Enter title or ISBN...")
     book_manager.author_input = QLineEdit()
     book_manager.author_input.setPlaceholderText("Enter author...")
     book_manager.word_count_input = QLineEdit()
@@ -105,26 +110,44 @@ def create_left_column(book_manager):
     )
     book_manager.member_input.returnPressed.connect(book_manager.add_book)
     
-    add_button = QPushButton("Add Book")
+    # Buttons
+    add_button = QPushButton("Add")
     add_button.clicked.connect(book_manager.add_book)
     
-    select_button = QPushButton("Select Book")
+    select_button = QPushButton("Select")
     select_button.clicked.connect(book_manager.select_book)
     
     book_manager.selected_list = QListWidget()
     book_manager.update_selected_list()
     
+    # Calendar settings
+    read_date_label = QLabel("Next Book")
+    weekend_format = QTextCharFormat()
+    weekend_format.setForeground(Qt.GlobalColor.white)  # Change weekend color to white
+
+    book_manager.read_date_calendar = QCalendarWidget()
+    book_manager.read_date_calendar.setSelectedDate(get_next_monday())
+    book_manager.read_date_calendar.setVerticalHeaderFormat(QCalendarWidget.VerticalHeaderFormat.NoVerticalHeader)
+    
+    # Apply custom format to weekends
+    for day in [Qt.DayOfWeek.Saturday, Qt.DayOfWeek.Sunday]:
+        book_manager.read_date_calendar.setWeekdayTextFormat(day, weekend_format)
+    
+    # Add widgets to layout
     layout.addWidget(QLabel("New Book"))
     layout.addWidget(book_manager.book_input)
     layout.addWidget(book_manager.author_input)
     layout.addWidget(book_manager.word_count_input)
     layout.addWidget(book_manager.member_input)
     layout.addWidget(add_button)
+    layout.addWidget(read_date_label)
+    layout.addWidget(book_manager.read_date_calendar)
     layout.addWidget(select_button)
-    layout.addWidget(QLabel("Previous Books"))
-    layout.addWidget(book_manager.selected_list)
+    # layout.addWidget(QLabel("Previous Books"))
+    # layout.addWidget(book_manager.selected_list)
     
     return left_column
+
 
 def create_right_column(book_manager):
     """Create the right column of the selection tab."""
@@ -138,7 +161,7 @@ def create_right_column(book_manager):
     book_manager.details_label = QLabel()
     book_manager.details_label.setWordWrap(True)
     
-    layout.addWidget(QLabel("Current Book"))
+    layout.addWidget(QLabel("Selected Book"))
     layout.addWidget(book_manager.cover_label)
     layout.addWidget(book_manager.details_label)
     layout.addStretch()

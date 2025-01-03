@@ -6,13 +6,6 @@ import os
 UP_ARROW_PATH = resource_path("assets/up_arrow.png").replace("\\", "/")
 DOWN_ARROW_PATH = resource_path("assets/down_arrow.png").replace("\\", "/")
 
-#print(f"Current working directory: {os.getcwd()}")
-#print(f"Up arrow path: {UP_ARROW_PATH}")
-#print(f"Down arrow path: {DOWN_ARROW_PATH}")
-#print(f"Files exist?")
-#print(f"Up arrow exists: {os.path.exists(UP_ARROW_PATH)}")
-#print(f"Down arrow exists: {os.path.exists(DOWN_ARROW_PATH)}")
-
 DARK_THEME = """
     QMainWindow, QWidget {
         background-color: #1e1e1e;
@@ -55,6 +48,69 @@ DARK_THEME = """
     QLabel {
         color: #ffffff;
     }
+    
+    /* Calendar Styling */
+    QCalendarWidget {
+        background-color: #2d2d2d;
+    }
+    QCalendarWidget QWidget {
+        alternate-background-color: #2d2d2d;
+    }
+    
+    QCalendarWidget QAbstractItemView {
+        background-color: #2d2d2d;
+        selection-background-color: #0d47a1;
+        selection-color: white;
+    }
+    
+    QCalendarWidget QAbstractItemView:enabled {
+        color: white;
+    }
+    
+    QCalendarWidget QAbstractItemView:disabled {
+        color: #666666;
+    }
+    
+    QCalendarWidget QMenu {
+        background-color: #2d2d2d;
+    }
+    
+    QCalendarWidget QSpinBox {
+        background-color: #2d2d2d;
+        color: white;
+    }
+    
+    QCalendarWidget QToolButton {
+        color: white;
+        background-color: transparent;
+        margin: 2px;
+        border-radius: 4px;
+    }
+    
+    QCalendarWidget QToolButton:hover {
+        background-color: #0d47a1;
+    }
+    
+    QCalendarWidget QToolButton::menu-indicator {
+        image: none;
+    }
+    
+    QCalendarWidget #qt_calendar_navigationbar {
+        background-color: #1e1e1e;
+        min-height: 40px;
+    }
+    
+    QCalendarWidget #qt_calendar_prevmonth {
+        qproperty-icon: url(assets/left_arrow.png);
+        min-width: 24px;
+    }
+    
+    QCalendarWidget #qt_calendar_nextmonth {
+        qproperty-icon: url(assets/right_arrow.png);
+        min-width: 24px;
+    }
+
+    /* Original SpinBox styling */
     QSpinBox::up-button, QSpinBox::down-button,
     QDoubleSpinBox::up-button, QDoubleSpinBox::down-button {
         width: 20px;
@@ -78,22 +134,22 @@ DARK_THEME = """
         subcontrol-position: bottom right;
     }
 
-    QSpinBox::up-arrow,
-    QDoubleSpinBox::up-arrow {{
-        image: url("{UP_ARROW_PATH}");
-        width: 10px;
-        height: 10px;
-    }}
+        QSpinBox::up-arrow,
+        QDoubleSpinBox::up-arrow {
+            image: url("%s");
+            width: 10px;
+            height: 10px;
+        }
 
-    QSpinBox::down-arrow,
-    QDoubleSpinBox::down-arrow {{
-        image: url("{DOWN_ARROW_PATH}");
-        width: 10px;
-        height: 10px;
-    }}
+        QSpinBox::down-arrow,
+        QDoubleSpinBox::down-arrow {
+            image: url("%s");
+            width: 10px;
+            height: 10px;
+        }
 
     QSpinBox, QDoubleSpinBox {
         padding-right: 15px;
         min-width: 75px;
     }
-"""
+""" % (UP_ARROW_PATH, DOWN_ARROW_PATH)

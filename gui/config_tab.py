@@ -128,7 +128,7 @@ class ConfigWidget(QWidget):
         guide_layout.addWidget(guide_header)
         
         guide_text = QLabel("""- Rating Baseline sets the star rating that equals 0 points 
-  lower and higher subtracts or adds points)
+  (lower and higher subtracts or adds points)
 
 - Rating Multiplier is the factor to multiply by 
   (10 is 1 point per 0.1 rating / 3 stars = 30 points)

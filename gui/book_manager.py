@@ -1,6 +1,6 @@
 """Module for managing book operations."""
-from utils.dates import get_current_date
-from PyQt6.QtWidgets import QListWidgetItem
+from utils.dates import get_next_monday, format_date, get_current_date
+from PyQt6.QtWidgets import QListWidgetItem, QCalendarWidget
 from PyQt6.QtGui import QFont, QPixmap
 from PyQt6.QtCore import Qt
 from utils.db import read_csv_file, write_csv_file
@@ -24,6 +24,7 @@ class BookManager:
         self.details_label = None
         self.book_list_widget = None
         self.goodreads_client = GoodreadsClient()
+        self.read_date_calendar = None
 
     def update_selected_list(self):
         """Update the list of selected books."""
@@ -85,8 +86,8 @@ class BookManager:
         <p><b>Words:</b> {book['length']}</p>
         <p><b>Rating:</b> {book['rating']}</p>
         <p><b>Score:</b> {book['score']}</p>
-        <p><b>Suggested by:</b> {book['member']}</p>
-        <p><b>Date Selected:</b> {book.get('date_selected', 'Not selected')}</p>
+        <p><b>Member:</b> {book['member']}</p>
+        <p><b>Read Date:</b> {book.get('date_selected', 'Not selected')}</p>
         """
         self.details_label.setText(details)
 
@@ -106,9 +107,9 @@ class BookManager:
             word_count_str = self.word_count_input.text().strip()
             member = self.member_input.text().strip()
             
-            if not all([query, word_count_str, member]):
+            if not all([query, word_count_str]):
                 self.parent.statusBar().setStyleSheet("color: red;")
-                self.parent.statusBar().showMessage("Fill in title/ISBN, word count, and member!", 6000)
+                self.parent.statusBar().showMessage("Title/ISBN and wordcount are required!", 6000)
                 return
 
             # Convert word count
@@ -174,7 +175,13 @@ class BookManager:
         
         top_book = select_top_choice(books, selected_books)
         if top_book:
-            top_book["date_selected"] = get_current_date()
+            # Use calendar date if selected, otherwise next Monday
+            if self.read_date_calendar and self.read_date_calendar.selectedDate():
+                selected_date = self.read_date_calendar.selectedDate().toPyDate()
+            else:
+                selected_date = get_next_monday()
+                
+            top_book["date_selected"] = format_date(selected_date)
             selected_books.append(top_book)
             save_selected_books(selected_books)
             
@@ -193,4 +200,4 @@ class BookManager:
                 self.book_list_widget.load_books(books)
             
             self.parent.statusBar().setStyleSheet("color: green;")
-            self.parent.statusBar().showMessage(" New book selected!", 6000)
+            self.parent.statusBar().showMessage("New book selected!", 6000)
