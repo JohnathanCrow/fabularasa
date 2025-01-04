@@ -1,3 +1,4 @@
+"""Date utility functions."""
 from datetime import datetime, timedelta
 
 def get_current_date():
@@ -14,4 +15,6 @@ def get_next_monday():
 
 def format_date(date):
     """Format a datetime object in standard format."""
+    if isinstance(date, str):
+        return date
     return date.strftime("%Y-%m-%d")

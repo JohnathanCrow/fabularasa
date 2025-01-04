@@ -1,7 +1,7 @@
 # Fabula Rasa
 ![screenshot_home](https://github.com/user-attachments/assets/a09de5f6-1544-4ec4-b41d-0cf6a9462697)
 
-A book club app that uses a simple algorithm to select the best candidate for the next read, based on rating, target length, and who suggested recently selected books. Required fields are title or ISBN (more reliable) and wordcount, author will be pulled automatically and member will be skipped if not entered. 
+A book club app that uses a simple algorithm to select the best candidate for the next read, based on rating, target length, and who suggested recently selected books. 
 
 ## Installation
 #### Windows
@@ -9,10 +9,9 @@ A book club app that uses a simple algorithm to select the best candidate for th
 
 ## Usage
 #### Home
-- Add book title or ISBN, author, wordcount, and member
-- Click 'Add' or press 'Enter' to add it to the database of available books
-
-- Select a planned start date in the calendar
+- Add book title/ISBN, author, word count, and member
+- Click 'Add' or press 'Enter' to add it to the available books
+- Select a planned read date in the calendar
 - Click 'Select' to run the selector
 
 #### Database
@@ -27,7 +26,7 @@ A book club app that uses a simple algorithm to select the best candidate for th
   (lower and higher ratings subtract or add points)
 - Rating Multiplier is the factor to multiply by
   (10 is 1 point per 0.1 rating / 3 stars = 30 points)
-- Target Wordcount sets the ideal number of words that equals 0 points
+- Target Wordcount sets the number of words that equals 0 points
   (lower and higher than target wordcount will subtracts points)
 - Penalty Step is how many words outside target to apply a 1 point penalty
   (every x number of words outside of target subtracts 1 point)
@@ -35,5 +34,8 @@ A book club app that uses a simple algorithm to select the best candidate for th
   (1 being the most recent, 2 the second most, 3 the third most)
   
  #### Tips
+- Required fields are title/ISBN and word count
+- Use [this](https://www.howlongtoread.org) for book word counts
+- Author will be pulled automatically and member will be skipped if not entered
 - Use solo by omitting member field, and setting member penalties to 0
-- Use [this](https://www.howlongtoread.org) for book wordcounts
+- Read date will default to next Monday if not changed

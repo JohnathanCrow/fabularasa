@@ -1,13 +1,12 @@
 """Module for managing book operations."""
 from utils.dates import get_next_monday, format_date, get_current_date
-from PyQt6.QtWidgets import QListWidgetItem, QCalendarWidget
+from PyQt6.QtWidgets import QListWidgetItem
 from PyQt6.QtGui import QFont, QPixmap
 from PyQt6.QtCore import Qt
 from utils.db import read_csv_file, write_csv_file
 from utils.selection import (
-    select_top_choice, 
-    load_selected_books, 
-    save_selected_books,
+    select_top_choice,
+    get_selected_books,
     calculate_scores
 )
 from utils.scraping import GoodreadsClient
@@ -29,9 +28,9 @@ class BookManager:
     def update_selected_list(self):
         """Update the list of selected books."""
         self.selected_list.clear()
-        selected_books = load_selected_books()
+        selected_books = get_selected_books()
         
-        for book in list(reversed(selected_books))[:20]:
+        for book in selected_books[:20]:  # Show last 20 selections
             text = f"{book['title']}, {book['author']} ({book['member']})"
             item = QListWidgetItem(text)
             item.setFont(QFont())
@@ -39,11 +38,11 @@ class BookManager:
 
     def update_current_selection(self):
         """Update the current book display."""
-        selected_books = load_selected_books()
+        selected_books = get_selected_books()
         if not selected_books:
             return
             
-        current_book = selected_books[-1]
+        current_book = selected_books[0]  # Most recent book
         self._update_cover(current_book)
         self._update_details(current_book)
 
@@ -87,7 +86,7 @@ class BookManager:
         <p><b>Rating:</b> {book['rating']}</p>
         <p><b>Score:</b> {book['score']}</p>
         <p><b>Member:</b> {book['member']}</p>
-        <p><b>Read Date:</b> {book.get('date_selected', 'Not selected')}</p>
+        <p><b>Read Date:</b> {book.get('read_date', 'Not selected')}</p>
         """
         self.details_label.setText(details)
 
@@ -112,7 +111,6 @@ class BookManager:
                 self.parent.statusBar().showMessage("Title/ISBN and wordcount are required!", 6000)
                 return
 
-            # Convert word count
             try:
                 word_count = self.parse_word_count(word_count_str)
             except ValueError as e:
@@ -126,22 +124,22 @@ class BookManager:
                     "title": metadata["title"],
                     "author": metadata["author"],
                     "length": word_count,
-                    "rating": float(metadata["rating"]),  # Convert to float
+                    "rating": float(metadata["rating"]),
                     "member": member,
                     "score": 0,
                     "date_added": get_current_date(),
-                    "date_selected": ""
+                    "read_date": ""
                 }
             else:
                 book_data = {
                     "title": query,
                     "author": self.author_input.text().strip() or "Unknown",
                     "length": word_count,
-                    "rating": 0.0,  # Use float instead of string
+                    "rating": 0.0,
                     "member": member,
                     "score": 0,
                     "date_added": get_current_date(),
-                    "date_selected": ""
+                    "read_date": ""
                 }
 
             books = read_csv_file("books.csv")
@@ -149,7 +147,7 @@ class BookManager:
             books_with_scores = calculate_scores(books)
             
             headers = ["title", "author", "length", "rating", "member", "score", 
-                      "date_added", "date_selected"]
+                      "date_added", "read_date"]
             write_csv_file("books.csv", books_with_scores, headers)
             
             if self.book_list_widget:
@@ -165,32 +163,31 @@ class BookManager:
             self.parent.statusBar().setStyleSheet("color: green;")
             self.parent.statusBar().showMessage("Book added successfully!", 6000)
         except Exception as e:
-            print(f"Error adding book: {e}")  # Print error to console for debugging
+            print(f"Error adding book: {e}")
             self.parent.statusBar().showMessage(f"Error adding book: {str(e)}")
-        
+            
     def select_book(self):
         """Select the next book for the club."""
         books = read_csv_file("books.csv")
-        selected_books = load_selected_books()
+        books = calculate_scores(books)
         
-        top_book = select_top_choice(books, selected_books)
+        top_book = select_top_choice(books)
         if top_book:
-            # Use calendar date if selected, otherwise next Monday
+            # Set the read date
             if self.read_date_calendar and self.read_date_calendar.selectedDate():
                 selected_date = self.read_date_calendar.selectedDate().toPyDate()
+                top_book["read_date"] = format_date(selected_date)
             else:
                 selected_date = get_next_monday()
-                
-            top_book["date_selected"] = format_date(selected_date)
-            selected_books.append(top_book)
-            save_selected_books(selected_books)
+                top_book["read_date"] = format_date(selected_date)
             
+            # Update the book in the CSV
             for book in books:
                 if book["title"] == top_book["title"]:
-                    book["date_selected"] = top_book["date_selected"]
+                    book["read_date"] = top_book["read_date"]
             
             headers = ["title", "author", "length", "rating", "member", "score", 
-                      "date_added", "date_selected"]
+                      "date_added", "read_date"]
             write_csv_file("books.csv", books, headers)
             
             self.update_selected_list()

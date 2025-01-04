@@ -1,8 +1,7 @@
 """Module for book selection and scoring."""
-import json
 from datetime import datetime
 from utils.config import load_config
-from .paths import get_file_path
+from utils.db import read_csv_file
 
 def calculate_rating_score(rating):
     """Calculate score component based on book rating."""
@@ -10,7 +9,7 @@ def calculate_rating_score(rating):
     try:
         rating = float(rating) if isinstance(rating, str) else rating
         difference_from_baseline = rating - config["rating"]["baseline"]
-        return max(round(difference_from_baseline * config["rating"]["multiplier"]), 0)
+        return max(round(difference_from_baseline * config["rating"]["multiplier"], 2), 0)
     except (ValueError, TypeError):
         return 0
 
@@ -29,7 +28,7 @@ def calculate_book_score(book):
     """Calculate total score for a single book."""
     rating_score = calculate_rating_score(book["rating"])
     length_score = calculate_length_score(book["length"])
-    total_score = round(rating_score + length_score)
+    total_score = round(rating_score + length_score, 2)
     return total_score
 
 def calculate_scores(books):
@@ -38,11 +37,21 @@ def calculate_scores(books):
         book["score"] = calculate_book_score(book)
     return books
 
-def get_member_penalties(selected_books):
+def get_selected_books():
+    """Get list of selected books ordered by read date."""
+    books = read_csv_file("books.csv")
+    selected = [b for b in books if b.get("read_date")]
+    # Sort by read_date in descending order
+    return sorted(selected, key=lambda x: x.get("read_date", ""), reverse=True)
+
+def get_member_penalties(books=None):
     """Calculate penalties for members based on their recent selections."""
+    if books is None:
+        books = get_selected_books()
+    
     config = load_config()
     penalties = {}
-    recent_selections = selected_books[-3:][::-1]
+    recent_selections = books[:3]  # Get 3 most recent selections
     
     for i, book in enumerate(recent_selections):
         member = book["member"]
@@ -55,8 +64,11 @@ def get_member_penalties(selected_books):
     
     return penalties
 
-def adjust_scores(books, selected_books):
+def adjust_scores(books, selected_books=None):
     """Adjust book scores based on member selection history."""
+    if selected_books is None:
+        selected_books = get_selected_books()
+        
     penalties = get_member_penalties(selected_books)
     
     adjusted_books = []
@@ -73,30 +85,13 @@ def adjust_scores(books, selected_books):
         
     return adjusted_books
 
-def load_selected_books(filename="selected.json"):
-    """Load previously selected books from JSON file."""
-    filepath = get_file_path(filename)
-    try:
-        with open(filepath, mode='r', encoding='utf-8') as file:
-            data = json.load(file)
-            return [data] if isinstance(data, dict) else data if isinstance(data, list) else []
-    except (FileNotFoundError, json.JSONDecodeError):
-        return []
-
-def save_selected_books(books, filename="selected.json"):
-    """Save selected books to JSON file."""
-    filepath = get_file_path(filename)
-    try:
-        with open(filepath, mode='w', encoding='utf-8') as file:
-            json.dump(books, file, indent=4)
-    except Exception as e:
-        print(f"Error saving selected books: {e}")
-
-def select_top_choice(books, selected_books):
+def select_top_choice(books):
     """Select the book with the highest score that hasn't been selected before."""
     if not books:
         return None
     
+    # Get all books and filter out ones that have been selected
+    selected_books = get_selected_books()
     selected_titles = {book['title'] for book in selected_books}
     available_books = [book for book in books if book['title'] not in selected_titles]
     

@@ -13,7 +13,6 @@ class ConfigWidget(QWidget):
         self.load_values()
 
     def init_ui(self):
-        """Initialize the user interface."""
         main_layout = QHBoxLayout(self)
         main_layout.setContentsMargins(20, 20, 20, 20)  # Add some padding around the edges
         main_layout.setAlignment(Qt.AlignmentFlag.AlignTop)  # Ensure the whole layout aligns to the top
@@ -78,7 +77,7 @@ class ConfigWidget(QWidget):
         settings_layout.addWidget(length_header, current_row, 0, 1, 2)
         current_row += 1
         
-        settings_layout.addWidget(QLabel("  Target Wordcount:"), current_row, 0)
+        settings_layout.addWidget(QLabel("  Target Words:"), current_row, 0)
         settings_layout.addWidget(self.target_spin, current_row, 1)
         current_row += 1
         
@@ -130,13 +129,13 @@ class ConfigWidget(QWidget):
         guide_text = QLabel("""- Rating Baseline sets the star rating that equals 0 points 
   (lower and higher subtracts or adds points)
 
-- Rating Multiplier is the factor to multiply by 
-  (10 is 1 point per 0.1 rating / 3 stars = 30 points)
+- Rating Multiplier is the factor to multiply the rating by 
+  (10 is 1 point per 0.1 rating / 3 stars = 20 points at baseline 1)
 
 
 
 
-- Target Wordcount sets the ideal number of words that equals 0 points
+- Target Words sets the number of words that equals 0 points
   (lower and higher than target wordcount will subtracts points)
 
 - Penalty Step is how many words outside target to apply a 1 point penalty
