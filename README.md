@@ -5,7 +5,7 @@ A book club app that uses a simple algorithm to select the best candidate for th
 
 ## Installation
 #### Windows
-- Download the latest release and run
+- [Download](https://github.com/JohnathanCrow/fabularasa/releases) the exe of the latest release and run
 
 ## Usage
 #### Home
