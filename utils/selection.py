@@ -1,7 +1,7 @@
 """Module for book selection and scoring."""
 from datetime import datetime
 from utils.config import load_config
-from utils.db import read_csv_file
+from utils.db import get_db
 
 def calculate_rating_score(rating):
     """Calculate score component based on book rating."""
@@ -39,10 +39,18 @@ def calculate_scores(books):
 
 def get_selected_books():
     """Get list of selected books ordered by read date."""
-    books = read_csv_file("books.csv")
-    selected = [b for b in books if b.get("read_date")]
-    # Sort by read_date in descending order
-    return sorted(selected, key=lambda x: x.get("read_date", ""), reverse=True)
+    conn = get_db()
+    try:
+        cursor = conn.execute(
+            """
+            SELECT * FROM books 
+            WHERE read_date IS NOT NULL AND read_date != ''
+            ORDER BY read_date DESC
+            """
+        )
+        return [dict(row) for row in cursor.fetchall()]
+    finally:
+        conn.close()
 
 def get_member_penalties(books=None):
     """Calculate penalties for members based on their recent selections."""
