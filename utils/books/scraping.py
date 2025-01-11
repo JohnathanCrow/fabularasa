@@ -1,11 +1,9 @@
-"""Module for interacting with Goodreads."""
 import requests
 from bs4 import BeautifulSoup
 from typing import Optional, Dict, Any
 from PyQt6.QtGui import QPixmap
 
 class GoodreadsClient:
-    """Client for interacting with Goodreads website."""
     
     BASE_URL = "https://www.goodreads.com"
     HEADERS = {
@@ -17,11 +15,9 @@ class GoodreadsClient:
         self.session.headers.update(self.HEADERS)
 
     def _is_isbn(self, query: str) -> bool:
-        """Check if query is an ISBN number."""
         return query.isdigit() and len(query) == 13
 
     def _get_book_page_url(self, query: str) -> Optional[str]:
-        """Get the book's detail page URL from search results or ISBN."""
         if self._is_isbn(query):
             return f"{self.BASE_URL}/book/isbn/{query}"
             
@@ -42,7 +38,6 @@ class GoodreadsClient:
             return None
 
     def get_book_info(self, query: str) -> Optional[Dict[str, Any]]:
-        """Get book information by title or ISBN."""
         book_url = self._get_book_page_url(query)
         if not book_url:
             return None
@@ -69,7 +64,6 @@ class GoodreadsClient:
             return None
 
     def get_cover(self, title: str) -> Optional[QPixmap]:
-        """Get book cover image as QPixmap."""
         book_url = self._get_book_page_url(title)
         if not book_url:
             return None

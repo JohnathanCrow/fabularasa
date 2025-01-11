@@ -1,6 +1,4 @@
-"""Module containing application styles."""
-from utils.paths import resource_path
-import os
+from utils.core.paths import resource_path
 
 # Use absolute paths for the arrow images
 UP_ARROW_PATH = resource_path("assets/up_arrow.png").replace("\\", "/")
@@ -16,7 +14,6 @@ DARK_THEME = """
         border: none;
         padding: 8px;
         border-radius: 4px;
-        min-width: 100px;
     }
     QPushButton:hover {
         background-color: #1565c0;
@@ -49,7 +46,6 @@ DARK_THEME = """
         color: #ffffff;
     }
     
-    /* Calendar Styling */
     QCalendarWidget {
         background-color: #2d2d2d;
     }
@@ -88,7 +84,7 @@ DARK_THEME = """
     }
     
     QCalendarWidget QToolButton:hover {
-        background-color: #0d47a1;
+        background-color: #2d2d2d;
     }
     
     QCalendarWidget QToolButton::menu-indicator {
@@ -110,7 +106,6 @@ DARK_THEME = """
         min-width: 24px;
     }
 
-    /* Original SpinBox styling */
     QSpinBox::up-button, QSpinBox::down-button,
     QDoubleSpinBox::up-button, QDoubleSpinBox::down-button {
         width: 20px;
@@ -134,22 +129,33 @@ DARK_THEME = """
         subcontrol-position: bottom right;
     }
 
-        QSpinBox::up-arrow,
-        QDoubleSpinBox::up-arrow {
-            image: url("%s");
-            width: 10px;
-            height: 10px;
-        }
+    QSpinBox::up-arrow,
+    QDoubleSpinBox::up-arrow {
+        image: url("%s");
+        width: 10px;
+        height: 10px;
+    }
 
-        QSpinBox::down-arrow,
-        QDoubleSpinBox::down-arrow {
-            image: url("%s");
-            width: 10px;
-            height: 10px;
-        }
+    QSpinBox::down-arrow,
+    QDoubleSpinBox::down-arrow {
+        image: url("%s");
+        width: 10px;
+        height: 10px;
+    }
 
     QSpinBox, QDoubleSpinBox {
         padding-right: 15px;
         min-width: 75px;
+    }
+    
+    QPushButton#profileButton {
+        background-color: transparent;
+        border: none;
+        width: 30px;
+        height: 30px;
+    }
+    
+    QPushButton#profileButton:hover {
+        background-color: #2d2d2d;
     }
 """ % (UP_ARROW_PATH, DOWN_ARROW_PATH)

@@ -1,4 +1,3 @@
-"""Module for managing application configuration."""
 import json
 import os
 from typing import Dict, Any
@@ -20,31 +19,26 @@ DEFAULT_CONFIG = {
     }
 }
 
-def get_config_path() -> str:
-    """Get the path to the config file."""
-    return get_file_path("config.json")
+def get_config_path(profile=None) -> str:
+    return get_file_path("config.json", profile)
 
-def load_config() -> Dict[str, Any]:
-    """Load configuration from JSON file or create with defaults if not exists."""
-    config_path = get_config_path()
+def load_config(profile=None) -> Dict[str, Any]:
+    config_path = get_config_path(profile)
     
     try:
         with open(config_path, 'r') as f:
             return json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
-        # Create config file with defaults if it doesn't exist
-        save_config(DEFAULT_CONFIG)
+        save_config(DEFAULT_CONFIG, profile)
         return DEFAULT_CONFIG
 
-def save_config(config: Dict[str, Any]) -> None:
-    """Save configuration to JSON file."""
-    config_path = get_config_path()
+def save_config(config: Dict[str, Any], profile=None) -> None:
+    config_path = get_config_path(profile)
     
     with open(config_path, 'w') as f:
         json.dump(config, f, indent=4)
 
 def validate_config(config: Dict[str, Any]) -> bool:
-    """Validate configuration structure and types."""
     try:
         required_structure = {
             "rating": {"baseline": float, "multiplier": (int, float)},
