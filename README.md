@@ -1,5 +1,5 @@
 # Fabula Rasa
-![screenshot_home](https://github.com/user-attachments/assets/a09de5f6-1544-4ec4-b41d-0cf6a9462697)
+![screenshot_home](https://github.com/JohnathanCrow/fabularasa/blob/main/screenshot.png)
 
 A book club app that uses a simple algorithm to select the best candidate for the next read, based on rating, target length, and who suggested recently selected books. 
 
@@ -13,6 +13,9 @@ A book club app that uses a simple algorithm to select the best candidate for th
 - Click 'Add' or press 'Enter' to add it to the available books
 - Select a planned read date in the calendar
 - Click 'Select' to run the selector
+
+- Switch profiles with the profile icon in the top left
+- Navigate through selected books with the icons beside the selected book panel
 
 #### Database
 - View available and previously selected books in a table view
