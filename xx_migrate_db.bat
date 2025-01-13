@@ -1,0 +1,6 @@
+@echo off
+echo Running database migration...
+python "%~dp0xx_migrate_db.py"
+echo.
+echo Press any key to exit...
+pause >nul

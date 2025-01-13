@@ -1,6 +1,5 @@
 from utils.core.paths import resource_path
 
-# Use absolute paths for the arrow images
 UP_ARROW_PATH = resource_path("assets/up_arrow.png").replace("\\", "/")
 DOWN_ARROW_PATH = resource_path("assets/down_arrow.png").replace("\\", "/")
 
@@ -158,4 +157,60 @@ DARK_THEME = """
     QPushButton#profileButton:hover {
         background-color: #2d2d2d;
     }
-""" % (UP_ARROW_PATH, DOWN_ARROW_PATH)
+
+    /* Store button styles */
+    QPushButton#goodreads_button,
+    QPushButton#amazon_button,
+    QPushButton#kobo_button {
+        background-color: transparent;
+        border: none;
+        padding: 5px;
+    }
+
+    QPushButton#goodreads_button:hover,
+    QPushButton#amazon_button:hover,
+    QPushButton#kobo_button:hover {
+        background-color: #2d2d2d;
+    }
+
+    /* Navigation button styles */
+    QPushButton#nav_button {
+        background-color: transparent;
+        border: none;
+    }
+
+    QPushButton#nav_button:hover {
+        background-color: #2d2d2d;
+    }
+
+    QPushButton#nav_button:disabled {
+        background-color: transparent;
+    }
+
+    /* Profile list styles */
+    QListWidget {
+        background-color: #2d2d2d;
+        border: 1px solid #3d3d3d;
+        border-radius: 4px;
+    }
+
+    QListWidget::item {
+        background: transparent;
+    }
+
+    QListWidget::item:hover {
+        background-color: #3d3d3d;
+    }
+
+    QListWidget::item:selected {
+        background-color: #444444;
+        color: white;
+    }
+
+    QCheckBox {
+        background: transparent;
+    }
+""" % (
+    UP_ARROW_PATH,
+    DOWN_ARROW_PATH,
+)

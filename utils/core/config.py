@@ -1,42 +1,37 @@
 import json
 import os
-from typing import Dict, Any
+from typing import Any, Dict
+
 from .paths import get_file_path
 
 DEFAULT_CONFIG = {
-    "rating": {
-        "baseline": 1.0,
-        "multiplier": 10
-    },
-    "length": {
-        "target": 50000,
-        "penalty_step": 2000
-    },
-    "member_penalties": {
-        "last_selection": -15,
-        "second_last": -10,
-        "third_last": -5
-    }
+    "rating": {"baseline": 1.0, "multiplier": 10},
+    "length": {"target": 50000, "penalty_step": 2000},
+    "member_penalties": {"last_selection": -15, "second_last": -10, "third_last": -5},
 }
+
 
 def get_config_path(profile=None) -> str:
     return get_file_path("config.json", profile)
 
+
 def load_config(profile=None) -> Dict[str, Any]:
     config_path = get_config_path(profile)
-    
+
     try:
-        with open(config_path, 'r') as f:
+        with open(config_path, "r") as f:
             return json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         save_config(DEFAULT_CONFIG, profile)
         return DEFAULT_CONFIG
 
+
 def save_config(config: Dict[str, Any], profile=None) -> None:
     config_path = get_config_path(profile)
-    
-    with open(config_path, 'w') as f:
+
+    with open(config_path, "w") as f:
         json.dump(config, f, indent=4)
+
 
 def validate_config(config: Dict[str, Any]) -> bool:
     try:
@@ -46,8 +41,8 @@ def validate_config(config: Dict[str, Any]) -> bool:
             "member_penalties": {
                 "last_selection": (int, float),
                 "second_last": (int, float),
-                "third_last": (int, float)
-            }
+                "third_last": (int, float),
+            },
         }
 
         def check_structure(data, structure):

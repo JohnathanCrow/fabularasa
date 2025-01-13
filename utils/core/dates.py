@@ -1,7 +1,11 @@
 from datetime import datetime, timedelta
 
+from utils.common.constants import DATE_FORMAT
+
+
 def get_current_date():
-    return datetime.now().strftime("%Y-%m-%d")
+    return datetime.now().strftime(DATE_FORMAT)
+
 
 def get_next_monday():
     today = datetime.now()
@@ -10,7 +14,6 @@ def get_next_monday():
         days_ahead += 7
     return today + timedelta(days=days_ahead)
 
+
 def format_date(date):
-    if isinstance(date, str):
-        return date
-    return date.strftime("%Y-%m-%d")
+    return date if isinstance(date, str) else date.strftime(DATE_FORMAT)

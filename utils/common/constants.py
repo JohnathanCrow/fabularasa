@@ -14,3 +14,4 @@ WINDOW_MIN_HEIGHT = 850
 
 # Time constants
 DATE_FORMAT = "%Y-%m-%d"
+DATE_FORMAT_MAIN = "%d %B, %Y"

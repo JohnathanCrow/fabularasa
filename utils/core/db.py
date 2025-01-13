@@ -1,21 +1,33 @@
 import sqlite3
-from typing import List, Dict, Any
-from .paths import get_file_path
 from contextlib import contextmanager
+from typing import Any, Dict, Generator, List
 
-DB_FILE = "books.db"
+from utils.common.constants import DB_FILE
+
+from .paths import get_file_path
+
 
 @contextmanager
-def get_db(profile=None) -> sqlite3.Connection:
+def get_db(profile=None) -> Generator[sqlite3.Connection, None, None]:
+    """
+    Context manager for accessing the SQLite database.
+
+    Yields:
+        sqlite3.Connection: Database connection object.
+    """
     conn = sqlite3.connect(get_file_path(DB_FILE, profile))
     conn.row_factory = sqlite3.Row
-    
+
     try:
+        # Ensure tables are created and schema is updated
         with conn:
-            conn.execute("""
+            conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS books (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
                     title TEXT NOT NULL,
                     author TEXT NOT NULL,
+                    isbn TEXT,
                     length INTEGER NOT NULL,
                     rating REAL NOT NULL DEFAULT 0,
                     member TEXT NOT NULL,
@@ -23,28 +35,67 @@ def get_db(profile=None) -> sqlite3.Connection:
                     date_added TEXT NOT NULL,
                     read_date TEXT
                 )
-            """)
+                """
+            )
+            # Add "isbn" column if it doesn't exist
+            cursor = conn.execute("PRAGMA table_info(books)")
+            columns = [col[1] for col in cursor.fetchall()]
+            if "isbn" not in columns:
+                conn.execute("ALTER TABLE books ADD COLUMN isbn TEXT")
+
         yield conn
     finally:
         conn.close()
 
-def read_db(filename, profile=None) -> List[Dict[str, Any]]:
-    with get_db(profile) as conn:
+
+def read_db(db_file_or_profile=None, profile=None) -> List[Dict[str, Any]]:
+    """
+    Reads all books from the database.
+    
+    Args:
+        db_file_or_profile: Can be either a database file path or a profile name
+        profile: Profile name (used only if first argument is a db_file)
+    
+    Returns:
+        List[Dict[str, Any]]: A list of books as dictionaries.
+    """
+    # If first argument is None or looks like a profile name, treat it as profile
+    if db_file_or_profile is None or isinstance(db_file_or_profile, str):
+        actual_profile = db_file_or_profile
+    else:
+        actual_profile = profile
+        
+    with get_db(actual_profile) as conn:
         cursor = conn.execute("SELECT * FROM books")
         return [dict(row) for row in cursor.fetchall()]
 
-def write_db(filename, data, headers, profile=None):
+
+def write_db(data: List[Dict[str, Any]], profile=None):
+    """
+    Writes a list of books to the database.
+
+    Args:
+        data (List[Dict[str, Any]]): List of book dictionaries to insert.
+    """
     with get_db(profile) as conn:
-        # Start a transaction
         try:
-            # Instead of deleting all records, we'll use a transaction
-            conn.execute("BEGIN TRANSACTION")
-            
-            # Create a temporary table
-            conn.execute("""
+            update_books_table(conn, data)
+        except Exception as e:
+            conn.execute("ROLLBACK")
+            print(f"Error updating database: {e}")
+            raise
+
+
+def update_books_table(conn, data):
+    conn.execute("BEGIN TRANSACTION")
+    # Create a temporary table to validate data before replacing
+    conn.execute(
+        """
                 CREATE TEMPORARY TABLE books_temp (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
                     title TEXT NOT NULL,
                     author TEXT NOT NULL,
+                    isbn TEXT,
                     length INTEGER NOT NULL,
                     rating REAL NOT NULL DEFAULT 0,
                     member TEXT NOT NULL,
@@ -52,39 +103,37 @@ def write_db(filename, data, headers, profile=None):
                     date_added TEXT NOT NULL,
                     read_date TEXT
                 )
-            """)
-            
-            # Insert new data into temporary table
-            conn.executemany(
                 """
+    )
+    # Ensure every book has an ISBN
+    for book in data:
+        if "isbn" not in book or not book["isbn"]:
+            book["isbn"] = "N/A"  # Assign default value if missing
+
+    # Insert data into temporary table
+    conn.executemany(
+        """
                 INSERT INTO books_temp (
-                    title, author, length, rating, member, 
+                    title, author, isbn, length, rating, member, 
                     score, date_added, read_date
                 ) VALUES (
-                    :title, :author, :length, :rating, :member,
+                    :title, :author, :isbn, :length, :rating, :member,
                     :score, :date_added, :read_date
                 )
                 """,
-                data
-            )
-            
-            # Clear main table and copy temp data
-            conn.execute("DELETE FROM books")
-            conn.execute("""
+        data,
+    )
+
+    # Replace the main table with data from the temporary table
+    conn.execute("DELETE FROM books")
+    conn.execute(
+        """
                 INSERT INTO books 
                 SELECT * FROM books_temp
-            """)
-            
-            # Commit transaction
-            conn.execute("COMMIT")
-            
-            # Clean up temp table
-            conn.execute("DROP TABLE books_temp")
-            
-            print(f"Database updated with {len(data)} books.")
-            
-        except Exception as e:
-            # If anything goes wrong, roll back to preserve existing data
-            conn.execute("ROLLBACK")
-            print(f"Error updating database: {e}")
-            raise
+                """
+    )
+
+    conn.execute("COMMIT")
+    conn.execute("DROP TABLE books_temp")
+
+    print(f"Database updated with {len(data)} books.")
