@@ -1,5 +1,3 @@
-import os
-
 from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtGui import QIcon, QTextCharFormat
 from PyQt6.QtWidgets import (QCalendarWidget, QHBoxLayout, QLabel, QLineEdit,
@@ -7,6 +5,7 @@ from PyQt6.QtWidgets import (QCalendarWidget, QHBoxLayout, QLabel, QLineEdit,
 
 from utils.core.dates import get_next_monday
 from utils.core.paths import resource_path
+from utils.core.db import read_db
 
 
 def create_left_column(book_manager):
@@ -58,6 +57,9 @@ def create_left_column(book_manager):
     # Apply custom format to weekends
     for day in [Qt.DayOfWeek.Saturday, Qt.DayOfWeek.Sunday]:
         book_manager.read_date_calendar.setWeekdayTextFormat(day, weekend_format)
+        
+    # Update calendar highlighting after creation
+    book_manager.update_calendar_highlighting()
 
     # Add widgets to layout
     layout.addWidget(QLabel("New Book"))

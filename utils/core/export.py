@@ -33,7 +33,6 @@ class ProfileListItem(QWidget):
 
         self.checkbox = QCheckBox()
         self.checkbox.setChecked(False)
-        self.checkbox.setStyleSheet("background: transparent;")
 
         layout.addWidget(self.label)
         layout.addStretch()
@@ -45,7 +44,6 @@ def refresh_profile_list(self):
     for profile in get_profiles():
         item = QListWidgetItem(self.profile_list)
         widget = ProfileListItem(profile)
-        # Set the item's background to transparent
         item.setBackground(Qt.GlobalColor.transparent)
         item.setSizeHint(widget.sizeHint())
         self.profile_list.addItem(item)
@@ -263,23 +261,26 @@ class ExportManagementDialog(QDialog):
                         return
 
                 # Extract files
+                current_profile = None
+                parent = self.parent()
+                if parent and hasattr(parent, "profile_manager"):
+                    current_profile = parent.profile_manager.get_current_profile()
+
                 for profile in profiles:
                     profile_dir = Path(get_data_dir(profile))
                     profile_dir.mkdir(parents=True, exist_ok=True)
 
                     # Extract only .db and .json files
                     for file in files:
-                        if file.startswith(f"{profile}/") and file.endswith(
-                            (".db", ".json")
-                        ):
+                        if file.startswith(f"{profile}/") and file.endswith((".db", ".json")):
                             zipf.extract(file, profile_dir.parent)
 
-                # Switch to default profile if it exists in the restored profiles
-                if "default" in profiles:
-                    parent = self.parent()
-                    if parent and hasattr(parent, "profile_manager"):
-                        parent.profile_manager.set_current_profile("default")
-                        parent.setWindowTitle("Fabula Rasa - default")
+                # Reload UI if the current profile was restored
+                if parent and hasattr(parent, "profile_manager"):
+                    if current_profile in profiles:
+                        # Current profile was restored, reload it
+                        parent.profile_manager.set_current_profile(current_profile)
+                        parent.setWindowTitle(f"Fabula Rasa - {current_profile}")
                         parent.book_manager.reload_data()
                         if parent.config_widget:
                             parent.config_widget.reload_profile()

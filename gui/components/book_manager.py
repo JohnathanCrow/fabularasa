@@ -1,8 +1,8 @@
 import json
 from datetime import datetime
 
-from PyQt6.QtCore import Qt, QUrl
-from PyQt6.QtGui import QDesktopServices, QFont, QIcon, QPixmap
+from PyQt6.QtCore import Qt, QUrl, QDate
+from PyQt6.QtGui import QDesktopServices, QFont, QIcon, QPixmap, QTextCharFormat, QColor
 from PyQt6.QtWidgets import QHBoxLayout, QListWidgetItem, QPushButton, QWidget
 
 from utils.books.scraping import GoodreadsClient
@@ -18,7 +18,7 @@ from utils.core.paths import get_data_dir, get_state_file_path, resource_path
 class BookManager:
     def __init__(self, parent):
         self.parent = parent
-        self.profile_manager = parent.profile_manager
+        self.profile_manager = parent.profile_manager if parent else None
         self.book_input = None
         self.author_input = None
         self.word_count_input = None
@@ -34,6 +34,15 @@ class BookManager:
         self.selected_books = []
         self.nav_buttons = {}
         self.store_buttons = {}
+        self.load_initial_data()
+        
+    def load_initial_data(self):
+        if self.profile_manager:
+            profile = self.profile_manager.get_current_profile()
+            books = read_db(profile)
+            self.selected_books = [b for b in books if b.get("read_date")]
+            self.selected_books.sort(key=lambda x: x.get("read_date"), reverse=False)
+            self.current_book_index = len(self.selected_books) - 1 if self.selected_books else 0
 
     def reload_data(self):
         profile = self.profile_manager.get_current_profile()
@@ -48,6 +57,7 @@ class BookManager:
         self.update_selected_list()
         self.load_selected_books()
         self.update_current_selection()
+        self.update_calendar_highlighting()  # Update calendar when data is reloaded
 
         if self.book_input:
             self.book_input.clear()
@@ -162,7 +172,9 @@ class BookManager:
     def _update_cover(self, book):
         if self.cover_label:
             if pixmap := self.goodreads_client.get_cover(
-                book["title"], book.get("isbn")
+                book["title"], 
+                book["author"],  # Add the author parameter
+                book.get("isbn")  # ISBN becomes the third parameter
             ):
                 pixmap = pixmap.scaled(
                     self.cover_label.width(),
@@ -270,75 +282,133 @@ class BookManager:
             raise ValueError(f"Invalid word count format: {word_count_str}") from e
 
     def add_book(self):
-        profile = self.profile_manager.get_current_profile()
-        try:
-            query = self.book_input.text().strip()
-            word_count_str = self.word_count_input.text().strip()
-            member = self.member_input.text().strip()
-
-            if not all([query, word_count_str]):
-                self.parent.statusBar().setStyleSheet("color: red;")
-                self.parent.statusBar().showMessage(
-                    "Title/ISBN and wordcount are required!", 6000
-                )
-                return
-
+            profile = self.profile_manager.get_current_profile()
             try:
-                word_count = self.parse_word_count(word_count_str)
-            except ValueError as e:
+                query = self.book_input.text().strip()
+                word_count_str = self.word_count_input.text().strip()
+                member = self.member_input.text().strip()
+
+                if not query:
+                    self.parent.statusBar().setStyleSheet("color: red;")
+                    self.parent.statusBar().showMessage(
+                        "Title/ISBN is required!", 6000
+                    )
+                    return
+
+                # Check if query is ISBN
+                isbn = validate_isbn(query)
+                is_isbn_query = bool(isbn)
+
+                metadata = self.goodreads_client.get_book_info(
+                    query, isbn if is_isbn_query else None
+                )
+                
+                if metadata:
+                    pixmap = self.goodreads_client.get_cover(
+                        metadata["title"],
+                        metadata["author"],
+                        isbn if is_isbn_query else metadata.get("isbn")
+                    )
+                    if pixmap:  # Ensure a cover was fetched
+                        pixmap = pixmap.scaled(400, 600, Qt.AspectRatioMode.IgnoreAspectRatio)
+
+                    
+                    # Use manual word count if provided, otherwise use estimated
+                    try:
+                        word_count = self.parse_word_count(word_count_str) if word_count_str else metadata["length"]
+                    except ValueError as e:
+                        self.parent.statusBar().setStyleSheet("color: red;")
+                        self.parent.statusBar().showMessage(str(e), 6000)
+                        return
+
+                    book_data = {
+                        "title": metadata["title"],
+                        "author": metadata["author"],
+                        "isbn": isbn if is_isbn_query else metadata.get("isbn", ""),
+                        "length": word_count,
+                        "rating": float(metadata["rating"]),
+                        "member": member,
+                        "score": 0,
+                        "date_added": get_current_date(),
+                        "read_date": "",
+                    }
+                else:
+                    if not word_count_str:
+                        self.parent.statusBar().setStyleSheet("color: red;")
+                        self.parent.statusBar().showMessage(
+                            "Word count is required when book metadata cannot be found!", 6000
+                        )
+                        return
+
+                    try:
+                        word_count = self.parse_word_count(word_count_str)
+                    except ValueError as e:
+                        self.parent.statusBar().setStyleSheet("color: red;")
+                        self.parent.statusBar().showMessage(str(e), 6000)
+                        return
+
+                    book_data = {
+                        "title": "Unknown" if is_isbn_query else query,
+                        "author": self.author_input.text().strip() or "Unknown",
+                        "isbn": isbn if is_isbn_query else "",
+                        "length": word_count,
+                        "rating": 0.0,
+                        "member": member,
+                        "score": 0,
+                        "date_added": get_current_date(),
+                        "read_date": "",
+                    }
+
+                    # Try to cache cover even for manually added books
+                    self.goodreads_client.get_cover(
+                        book_data["title"],
+                        book_data["author"],
+                        book_data["isbn"] if book_data["isbn"] else None
+                    )
+
+                books = read_db(profile)
+                books.append(book_data)
+                books_with_scores = calculate_scores(books)
+
+                self.write_books_to_db(books_with_scores, profile)
+                self.book_input.clear()
+                self.author_input.clear()
+                self.word_count_input.clear()
+                self.member_input.clear()
+                self.book_input.setFocus()
+
+                self.parent.statusBar().setStyleSheet("color: green;")
+                self.parent.statusBar().showMessage("Book added successfully!", 6000)
+            except Exception as e:
+                print(f"Error adding book: {e}")
                 self.parent.statusBar().setStyleSheet("color: red;")
-                self.parent.statusBar().showMessage(str(e), 6000)
-                return
+                self.parent.statusBar().showMessage(f"Error adding book: {str(e)}", 6000)
+                
+    def update_calendar_highlighting(self):
+        if not hasattr(self, 'read_date_calendar'):
+            return
 
-            # Check if query is ISBN
-            isbn = validate_isbn(query)
-            is_isbn_query = bool(isbn)
+        # Clear existing highlighting
+        format = QTextCharFormat()
+        self.read_date_calendar.setDateTextFormat(QDate(), format)
 
-            metadata = self.goodreads_client.get_book_info(
-                query, isbn if is_isbn_query else None
-            )
-            if metadata:
-                book_data = {
-                    "title": metadata["title"],
-                    "author": metadata["author"],
-                    "isbn": isbn if is_isbn_query else metadata.get("isbn", ""),
-                    "length": word_count,
-                    "rating": float(metadata["rating"]),
-                    "member": member,
-                    "score": 0,
-                    "date_added": get_current_date(),
-                    "read_date": "",
-                }
-            else:
-                book_data = {
-                    "title": "Unknown" if is_isbn_query else query,
-                    "author": self.author_input.text().strip() or "Unknown",
-                    "isbn": isbn if is_isbn_query else "",
-                    "length": word_count,
-                    "rating": 0.0,
-                    "member": member,
-                    "score": 0,
-                    "date_added": get_current_date(),
-                    "read_date": "",
-                }
+        # Get all books with read dates
+        profile = self.profile_manager.get_current_profile() if self.profile_manager else None
+        books = read_db(profile)
+        read_dates = [book['read_date'] for book in books if book.get('read_date')]
 
-            books = read_db(profile)
-            books.append(book_data)
-            books_with_scores = calculate_scores(books)
+        # Create highlighting format
+        highlight_format = QTextCharFormat()
+        highlight_format.setForeground(QColor('#1565c0'))  # Same blue as buttons
 
-            self.write_books_to_db(books_with_scores, profile)
-            self.book_input.clear()
-            self.author_input.clear()
-            self.word_count_input.clear()
-            self.member_input.clear()
-            self.book_input.setFocus()
-
-            self.parent.statusBar().setStyleSheet("color: green;")
-            self.parent.statusBar().showMessage("Book added successfully!", 6000)
-        except Exception as e:
-            print(f"Error adding book: {e}")
-            self.parent.statusBar().setStyleSheet("color: red;")
-            self.parent.statusBar().showMessage(f"Error adding book: {str(e)}", 6000)
+        # Apply highlighting to dates with books
+        for date_str in read_dates:
+            try:
+                date = QDate.fromString(date_str, 'yyyy-MM-dd')
+                if date.isValid():
+                    self.read_date_calendar.setDateTextFormat(date, highlight_format)
+            except Exception as e:
+                print(f"Error highlighting date {date_str}: {e}")
 
     def select_book(self):
         profile = self.profile_manager.get_current_profile()
@@ -366,6 +436,7 @@ class BookManager:
         self.load_selected_books()
         self.update_selected_list()
         self.update_current_selection()
+        self.update_calendar_highlighting()  # Update calendar after selecting a book
 
         self.parent.statusBar().setStyleSheet("color: green;")
         self.parent.statusBar().showMessage("New book selected!", 6000)

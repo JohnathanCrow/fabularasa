@@ -1,9 +1,11 @@
 import json
+import shutil
+from pathlib import Path
 
 from PyQt6.QtWidgets import (QDialog, QHBoxLayout, QLabel, QLineEdit,
                              QMessageBox, QPushButton, QVBoxLayout)
 
-from .paths import (get_data_dir, get_profiles, get_state_file_path,
+from .paths import (get_base_dir, get_data_dir, get_profiles, get_state_file_path,
                     resource_path)
 
 
@@ -46,10 +48,20 @@ Kobo: gb/en, de/de, fr/fr, jp/ja"""
         help_text.setStyleSheet("color: #888;")
         layout.addWidget(help_text)
 
+        # Buttons layout
+        buttons_layout = QHBoxLayout()
+        
+        # Clear Cache button
+        clear_cache_btn = QPushButton("Clear Cover Cache")
+        clear_cache_btn.clicked.connect(self.clear_cache)
+        buttons_layout.addWidget(clear_cache_btn)
+        
         # Save button
         save_btn = QPushButton("Save")
         save_btn.clicked.connect(self.save_settings)
-        layout.addWidget(save_btn)
+        buttons_layout.addWidget(save_btn)
+        
+        layout.addLayout(buttons_layout)
 
         self.resize(400, 400)
 
@@ -83,3 +95,25 @@ Kobo: gb/en, de/de, fr/fr, jp/ja"""
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to save settings: {str(e)}")
 
+    def clear_cache(self):
+        try:
+            cache_dir = Path(get_base_dir()) / "cache" / "covers"
+            if cache_dir.exists():
+                # Ask for confirmation
+                reply = QMessageBox.question(
+                    self,
+                    "Clear Cache",
+                    "Are you sure you want to delete all cached book covers?",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                    QMessageBox.StandardButton.No
+                )
+                
+                if reply == QMessageBox.StandardButton.Yes:
+                    # Delete all files in the cache directory
+                    for file in cache_dir.glob("*.jpg"):
+                        file.unlink()
+                    # QMessageBox.information(self, "Success", "Cache cleared successfully!")
+            else:
+                QMessageBox.information(self, "Info", "Cache directory is already empty.")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to clear cache: {str(e)}")
