@@ -8,6 +8,7 @@ DEFAULT_CONFIG = {
     "rating": {"baseline": 1.0, "multiplier": 10},
     "length": {"target": 50000, "penalty_step": 2000},
     "member_penalties": {"last_selection": -15, "second_last": -10, "third_last": -5},
+    "tag_adjustments": {"last_selection": 0, "second_last": 0, "third_last": 0},
 }
 
 
@@ -20,7 +21,12 @@ def load_config(profile=None) -> Dict[str, Any]:
 
     try:
         with open(config_path, "r") as f:
-            return json.load(f)
+            config = json.load(f)
+            # Add tag_adjustments if missing
+            if "tag_adjustments" not in config:
+                config["tag_adjustments"] = DEFAULT_CONFIG["tag_adjustments"]
+                save_config(config, profile)
+            return config
     except (FileNotFoundError, json.JSONDecodeError):
         save_config(DEFAULT_CONFIG, profile)
         return DEFAULT_CONFIG
@@ -39,6 +45,11 @@ def validate_config(config: Dict[str, Any]) -> bool:
             "rating": {"baseline": float, "multiplier": (int, float)},
             "length": {"target": int, "penalty_step": int},
             "member_penalties": {
+                "last_selection": (int, float),
+                "second_last": (int, float),
+                "third_last": (int, float),
+            },
+            "tag_adjustments": {
                 "last_selection": (int, float),
                 "second_last": (int, float),
                 "third_last": (int, float),

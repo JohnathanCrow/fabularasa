@@ -21,6 +21,7 @@ class BookManager:
         self.profile_manager = parent.profile_manager if parent else None
         self.book_input = None
         self.author_input = None
+        self.tags_input = None  # Add tags input field
         self.word_count_input = None
         self.member_input = None
         self.selected_list = None
@@ -63,6 +64,8 @@ class BookManager:
             self.book_input.clear()
         if self.author_input:
             self.author_input.clear()
+        if self.tags_input:  # Clear tags input
+            self.tags_input.clear()
         if self.word_count_input:
             self.word_count_input.clear()
         if self.member_input:
@@ -260,16 +263,15 @@ class BookManager:
 
     def _update_details(self, book):
         if self.details_label:
-            # <h2>{book['title']}</h2>
             details = f"""
             <p></p>
             <p><b>Author:</b> {book['author']}</p>
             <p><b>ISBN:</b> {book.get('isbn', 'N/A')}</p>
+            <p><b>Tags:</b> {book.get('tags', '')}</p>
             <p><b>Words:</b> {book['length']}</p>
             <p><b>Rating:</b> {book['rating']}</p>
             <p><b>Score:</b> {book['score']}</p>
             <p><b>Member:</b> {book['member']}</p>
-
             """
             self.details_label.setText(details)
 
@@ -282,107 +284,111 @@ class BookManager:
             raise ValueError(f"Invalid word count format: {word_count_str}") from e
 
     def add_book(self):
-            profile = self.profile_manager.get_current_profile()
-            try:
-                query = self.book_input.text().strip()
-                word_count_str = self.word_count_input.text().strip()
-                member = self.member_input.text().strip()
+        profile = self.profile_manager.get_current_profile()
+        try:
+            query = self.book_input.text().strip()
+            word_count_str = self.word_count_input.text().strip()
+            member = self.member_input.text().strip()
+            tags = [tag.strip() for tag in self.tags_input.text().split(",") if tag.strip()]
 
-                if not query:
+            if not query:
+                self.parent.statusBar().setStyleSheet("color: red;")
+                self.parent.statusBar().showMessage(
+                    "Title/ISBN is required!", 6000
+                )
+                return
+
+            # Check if query is ISBN
+            isbn = validate_isbn(query)
+            is_isbn_query = bool(isbn)
+
+            metadata = self.goodreads_client.get_book_info(
+                query, isbn if is_isbn_query else None
+            )
+            
+            if metadata:
+                pixmap = self.goodreads_client.get_cover(
+                    metadata["title"],
+                    metadata["author"],
+                    isbn if is_isbn_query else metadata.get("isbn")
+                )
+                if pixmap:  # Ensure a cover was fetched
+                    pixmap = pixmap.scaled(400, 600, Qt.AspectRatioMode.IgnoreAspectRatio)
+
+                
+                # Use manual word count if provided, otherwise use estimated
+                try:
+                    word_count = self.parse_word_count(word_count_str) if word_count_str else metadata["length"]
+                except ValueError as e:
+                    self.parent.statusBar().setStyleSheet("color: red;")
+                    self.parent.statusBar().showMessage(str(e), 6000)
+                    return
+
+                book_data = {
+                    "title": metadata["title"],
+                    "author": metadata["author"],
+                    "isbn": isbn if is_isbn_query else metadata.get("isbn", ""),
+                    "tags": ", ".join(tags),
+                    "length": word_count,
+                    "rating": float(metadata["rating"]),
+                    "member": member,
+                    "score": 0,
+                    "date_added": get_current_date(),
+                    "read_date": "",
+                }
+            else:
+                if not word_count_str:
                     self.parent.statusBar().setStyleSheet("color: red;")
                     self.parent.statusBar().showMessage(
-                        "Title/ISBN is required!", 6000
+                        "Word count is required when book metadata cannot be found!", 6000
                     )
                     return
 
-                # Check if query is ISBN
-                isbn = validate_isbn(query)
-                is_isbn_query = bool(isbn)
+                try:
+                    word_count = self.parse_word_count(word_count_str)
+                except ValueError as e:
+                    self.parent.statusBar().setStyleSheet("color: red;")
+                    self.parent.statusBar().showMessage(str(e), 6000)
+                    return
 
-                metadata = self.goodreads_client.get_book_info(
-                    query, isbn if is_isbn_query else None
+                book_data = {
+                    "title": "Unknown" if is_isbn_query else query,
+                    "author": self.author_input.text().strip() or "Unknown",
+                    "isbn": isbn if is_isbn_query else "",
+                    "tags": ", ".join(tags),
+                    "length": word_count,
+                    "rating": 0.0,
+                    "member": member,
+                    "score": 0,
+                    "date_added": get_current_date(),
+                    "read_date": "",
+                }
+
+                # Try to cache cover even for manually added books
+                self.goodreads_client.get_cover(
+                    book_data["title"],
+                    book_data["author"],
+                    book_data["isbn"] if book_data["isbn"] else None
                 )
-                
-                if metadata:
-                    pixmap = self.goodreads_client.get_cover(
-                        metadata["title"],
-                        metadata["author"],
-                        isbn if is_isbn_query else metadata.get("isbn")
-                    )
-                    if pixmap:  # Ensure a cover was fetched
-                        pixmap = pixmap.scaled(400, 600, Qt.AspectRatioMode.IgnoreAspectRatio)
 
-                    
-                    # Use manual word count if provided, otherwise use estimated
-                    try:
-                        word_count = self.parse_word_count(word_count_str) if word_count_str else metadata["length"]
-                    except ValueError as e:
-                        self.parent.statusBar().setStyleSheet("color: red;")
-                        self.parent.statusBar().showMessage(str(e), 6000)
-                        return
+            books = read_db(profile)
+            books.append(book_data)
+            books_with_scores = calculate_scores(books)
 
-                    book_data = {
-                        "title": metadata["title"],
-                        "author": metadata["author"],
-                        "isbn": isbn if is_isbn_query else metadata.get("isbn", ""),
-                        "length": word_count,
-                        "rating": float(metadata["rating"]),
-                        "member": member,
-                        "score": 0,
-                        "date_added": get_current_date(),
-                        "read_date": "",
-                    }
-                else:
-                    if not word_count_str:
-                        self.parent.statusBar().setStyleSheet("color: red;")
-                        self.parent.statusBar().showMessage(
-                            "Word count is required when book metadata cannot be found!", 6000
-                        )
-                        return
+            self.write_books_to_db(books_with_scores, profile)
+            self.book_input.clear()
+            self.author_input.clear()
+            self.tags_input.clear()
+            self.word_count_input.clear()
+            self.member_input.clear()
+            self.book_input.setFocus()
 
-                    try:
-                        word_count = self.parse_word_count(word_count_str)
-                    except ValueError as e:
-                        self.parent.statusBar().setStyleSheet("color: red;")
-                        self.parent.statusBar().showMessage(str(e), 6000)
-                        return
-
-                    book_data = {
-                        "title": "Unknown" if is_isbn_query else query,
-                        "author": self.author_input.text().strip() or "Unknown",
-                        "isbn": isbn if is_isbn_query else "",
-                        "length": word_count,
-                        "rating": 0.0,
-                        "member": member,
-                        "score": 0,
-                        "date_added": get_current_date(),
-                        "read_date": "",
-                    }
-
-                    # Try to cache cover even for manually added books
-                    self.goodreads_client.get_cover(
-                        book_data["title"],
-                        book_data["author"],
-                        book_data["isbn"] if book_data["isbn"] else None
-                    )
-
-                books = read_db(profile)
-                books.append(book_data)
-                books_with_scores = calculate_scores(books)
-
-                self.write_books_to_db(books_with_scores, profile)
-                self.book_input.clear()
-                self.author_input.clear()
-                self.word_count_input.clear()
-                self.member_input.clear()
-                self.book_input.setFocus()
-
-                self.parent.statusBar().setStyleSheet("color: green;")
-                self.parent.statusBar().showMessage("Book added successfully!", 6000)
-            except Exception as e:
-                print(f"Error adding book: {e}")
-                self.parent.statusBar().setStyleSheet("color: red;")
-                self.parent.statusBar().showMessage(f"Error adding book: {str(e)}", 6000)
+            self.parent.statusBar().setStyleSheet("color: green;")
+            self.parent.statusBar().showMessage("Book added successfully!", 6000)
+        except Exception as e:
+            print(f"Error adding book: {e}")
+            self.parent.statusBar().setStyleSheet("color: red;")
+            self.parent.statusBar().showMessage(f"Error adding book: {str(e)}", 6000)
                 
     def update_calendar_highlighting(self):
         if not hasattr(self, 'read_date_calendar'):
@@ -446,6 +452,7 @@ class BookManager:
             "title",
             "author",
             "isbn",
+            "tags",
             "length",
             "rating",
             "member",

@@ -28,6 +28,7 @@ def get_db(profile=None) -> Generator[sqlite3.Connection, None, None]:
                     title TEXT NOT NULL,
                     author TEXT NOT NULL,
                     isbn TEXT,
+                    tags TEXT,
                     length INTEGER NOT NULL,
                     rating REAL NOT NULL DEFAULT 0,
                     member TEXT NOT NULL,
@@ -37,11 +38,13 @@ def get_db(profile=None) -> Generator[sqlite3.Connection, None, None]:
                 )
                 """
             )
-            # Add "isbn" column if it doesn't exist
+            # Add columns if they don't exist
             cursor = conn.execute("PRAGMA table_info(books)")
             columns = [col[1] for col in cursor.fetchall()]
             if "isbn" not in columns:
                 conn.execute("ALTER TABLE books ADD COLUMN isbn TEXT")
+            if "tags" not in columns:
+                conn.execute("ALTER TABLE books ADD COLUMN tags TEXT")
 
         yield conn
     finally:
@@ -96,6 +99,7 @@ def update_books_table(conn, data):
                     title TEXT NOT NULL,
                     author TEXT NOT NULL,
                     isbn TEXT,
+                    tags TEXT,
                     length INTEGER NOT NULL,
                     rating REAL NOT NULL DEFAULT 0,
                     member TEXT NOT NULL,
@@ -105,19 +109,21 @@ def update_books_table(conn, data):
                 )
                 """
     )
-    # Ensure every book has an ISBN
+    # Ensure every book has an ISBN and tags
     for book in data:
         if "isbn" not in book or not book["isbn"]:
             book["isbn"] = "N/A"  # Assign default value if missing
+        if "tags" not in book or not book["tags"]:
+            book["tags"] = ""  # Assign empty string if missing
 
     # Insert data into temporary table
     conn.executemany(
         """
                 INSERT INTO books_temp (
-                    title, author, isbn, length, rating, member, 
+                    title, author, isbn, tags, length, rating, member, 
                     score, date_added, read_date
                 ) VALUES (
-                    :title, :author, :isbn, :length, :rating, :member,
+                    :title, :author, :isbn, :tags, :length, :rating, :member,
                     :score, :date_added, :read_date
                 )
                 """,

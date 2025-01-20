@@ -17,6 +17,8 @@ def create_left_column(book_manager):
     book_manager.book_input.setPlaceholderText("Enter title or ISBN...")
     book_manager.author_input = QLineEdit()
     book_manager.author_input.setPlaceholderText("Enter author...")
+    book_manager.tags_input = QLineEdit()
+    book_manager.tags_input.setPlaceholderText("Enter tags (comma separated)...")
     book_manager.word_count_input = QLineEdit()
     book_manager.word_count_input.setPlaceholderText("Enter word count...")
     book_manager.member_input = QLineEdit()
@@ -26,6 +28,9 @@ def create_left_column(book_manager):
         lambda: book_manager.author_input.setFocus()
     )
     book_manager.author_input.returnPressed.connect(
+        lambda: book_manager.tags_input.setFocus()
+    )
+    book_manager.tags_input.returnPressed.connect(
         lambda: book_manager.word_count_input.setFocus()
     )
     book_manager.word_count_input.returnPressed.connect(
@@ -65,6 +70,7 @@ def create_left_column(book_manager):
     layout.addWidget(QLabel("New Book"))
     layout.addWidget(book_manager.book_input)
     layout.addWidget(book_manager.author_input)
+    layout.addWidget(book_manager.tags_input)
     layout.addWidget(book_manager.word_count_input)
     layout.addWidget(book_manager.member_input)
     layout.addWidget(add_button)

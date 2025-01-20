@@ -24,7 +24,7 @@ class BookClubWindow(QMainWindow):
             f"Fabula Rasa - {self.profile_manager.get_current_profile()}"
         )
         self.setStyleSheet(DARK_THEME)
-        self.setMinimumSize(930, 830)
+        self.setMinimumSize(930, 850)
 
         icon_path = resource_path("assets/icon.png")
         if os.path.exists(icon_path):

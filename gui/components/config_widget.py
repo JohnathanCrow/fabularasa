@@ -49,6 +49,16 @@ class ConfigWidget(QWidget):
         self.third_penalty_spin = QSpinBox()
         self.third_penalty_spin.setRange(-100, 0)
 
+        # Tag adjustment spin boxes
+        self.last_tag_spin = QSpinBox()
+        self.last_tag_spin.setRange(-100, 100)
+
+        self.second_tag_spin = QSpinBox()
+        self.second_tag_spin.setRange(-100, 100)
+
+        self.third_tag_spin = QSpinBox()
+        self.third_tag_spin.setRange(-100, 100)
+
         current_row = 0
 
         # Rating Settings Section
@@ -103,6 +113,26 @@ class ConfigWidget(QWidget):
         settings_layout.addWidget(self.third_penalty_spin, current_row, 1)
         current_row += 1
 
+        # Tag Adjustments Section
+        tag_header = QLabel("Tag Adjustments")
+        tag_header.setStyleSheet(
+            "font-weight: bold; font-size: 14px; padding: 10px 0;"
+        )
+        settings_layout.addWidget(tag_header, current_row, 0, 1, 2)
+        current_row += 1
+
+        settings_layout.addWidget(QLabel("  Tag 1:"), current_row, 0)
+        settings_layout.addWidget(self.last_tag_spin, current_row, 1)
+        current_row += 1
+
+        settings_layout.addWidget(QLabel("  Tag 2:"), current_row, 0)
+        settings_layout.addWidget(self.second_tag_spin, current_row, 1)
+        current_row += 1
+
+        settings_layout.addWidget(QLabel("  Tag 3:"), current_row, 0)
+        settings_layout.addWidget(self.third_tag_spin, current_row, 1)
+        current_row += 1
+
         # Save Button
         save_btn = QPushButton("Save")
         save_btn.clicked.connect(self.save_values)
@@ -141,6 +171,17 @@ class ConfigWidget(QWidget):
 
 - Penalty 1, 2, and 3 subtracts points based on who selected recent books
   (1 being the most recent, 2 the second most, 3 the third most)
+
+
+
+
+
+
+
+
+
+- Tag 1, 2, and 3 adds or subtracts points based on recent book tags
+  (1 being the most recent, 2 the second most, 3 the third most)
         """
         )
         guide_text.setWordWrap(True)
@@ -165,6 +206,9 @@ class ConfigWidget(QWidget):
         self.last_penalty_spin.setValue(0)
         self.second_penalty_spin.setValue(0)
         self.third_penalty_spin.setValue(0)
+        self.last_tag_spin.setValue(0)
+        self.second_tag_spin.setValue(0)
+        self.third_tag_spin.setValue(0)
 
         # Set new values
         self.baseline_spin.setValue(config["rating"]["baseline"])
@@ -174,6 +218,9 @@ class ConfigWidget(QWidget):
         self.last_penalty_spin.setValue(config["member_penalties"]["last_selection"])
         self.second_penalty_spin.setValue(config["member_penalties"]["second_last"])
         self.third_penalty_spin.setValue(config["member_penalties"]["third_last"])
+        self.last_tag_spin.setValue(config["tag_adjustments"]["last_selection"])
+        self.second_tag_spin.setValue(config["tag_adjustments"]["second_last"])
+        self.third_tag_spin.setValue(config["tag_adjustments"]["third_last"])
 
     def save_values(self):
         profile = (
@@ -192,6 +239,11 @@ class ConfigWidget(QWidget):
                 "last_selection": self.last_penalty_spin.value(),
                 "second_last": self.second_penalty_spin.value(),
                 "third_last": self.third_penalty_spin.value(),
+            },
+            "tag_adjustments": {
+                "last_selection": self.last_tag_spin.value(),
+                "second_last": self.second_tag_spin.value(),
+                "third_last": self.third_tag_spin.value(),
             },
         }
 

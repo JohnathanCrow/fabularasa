@@ -173,7 +173,7 @@ class ProfileManagementDialog(QDialog):
         old_name = current_item.data(Qt.ItemDataRole.UserRole)
 
         # Prevent renaming the default profile
-        if old_name == "default":
+        if old_name.lower() == "default":
             QMessageBox.warning(self, "Error", "Cannot rename the default profile")
             return
 
@@ -187,11 +187,13 @@ class ProfileManagementDialog(QDialog):
                 QMessageBox.warning(self, "Error", "Profile name cannot be empty")
                 return
 
-            if new_name == "default":
+            if new_name.lower() == "default":
                 QMessageBox.warning(self, "Error", "Cannot rename to 'default'")
                 return
 
-            if new_name in self.profile_manager.get_available_profiles():
+            # Case-insensitive check for existing profiles
+            if new_name.lower() in [p.lower() for p in self.profile_manager.get_available_profiles() 
+                                  if p.lower() != old_name.lower()]:
                 QMessageBox.warning(self, "Error", "Profile name already exists")
                 return
 
@@ -199,36 +201,42 @@ class ProfileManagementDialog(QDialog):
                 old_path = Path(self.profile_manager._get_profile_dir(old_name))
                 new_path = Path(self.profile_manager._get_profile_dir(new_name))
 
-                # Ensure old path exists
-                if not old_path.exists():
+                # Find the actual case-sensitive path that exists
+                actual_old_path = None
+                parent_dir = old_path.parent
+                if parent_dir.exists():
+                    for existing_path in parent_dir.iterdir():
+                        if existing_path.name.lower() == old_name.lower():
+                            actual_old_path = existing_path
+                            break
+
+                if not actual_old_path:
                     QMessageBox.warning(
-                        self, "Error", f"Old profile folder {old_path} does not exist."
+                        self, "Error", f"Profile folder {old_path} does not exist."
                     )
                     return
 
-                # Step 1: If the new path exists, remove it before renaming
-                if new_path.exists():
-                    print(f"Overwriting {new_path}")
-                    shutil.rmtree(new_path)  # Delete the existing folder
+                # For Windows case-only changes, use a temporary name first
+                if old_name.lower() == new_name.lower():
+                    temp_path = old_path.parent / f"{old_name}_temp"
+                    actual_old_path.rename(temp_path)
+                    temp_path.rename(new_path)
+                else:
+                    # Regular rename for different names
+                    actual_old_path.rename(new_path)
 
-                # Step 2: Rename the old profile folder (not create a new folder)
-                print(f"Attempting to rename {old_path} to {new_path}")
-                old_path.rename(new_path)  # Rename the folder directly
-
-                # Step 3: Update the profile manager if necessary (e.g., if it's the current profile)
-                if self.profile_manager.get_current_profile() == old_name:
+                # Update the profile manager if necessary
+                if self.profile_manager.get_current_profile().lower() == old_name.lower():
                     self.profile_manager.set_current_profile(new_name)
                     self.parent().setWindowTitle(f"Fabula Rasa - {new_name}")
 
-                # Step 4: Refresh profile list and select the new profile
+                # Refresh profile list and select the new profile
                 self.refresh_profile_list()
 
-                # Manually select the newly renamed profile
+                # Select the newly renamed profile
                 for index in range(self.profile_list.count()):
-                    if (
-                        self.profile_list.item(index).data(Qt.ItemDataRole.UserRole)
-                        == new_name
-                    ):
+                    if (self.profile_list.item(index).data(Qt.ItemDataRole.UserRole).lower() 
+                        == new_name.lower()):
                         self.profile_list.setCurrentItem(self.profile_list.item(index))
                         break
 
