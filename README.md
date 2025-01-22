@@ -70,3 +70,7 @@ A book club app that uses a simple algorithm to select the best candidate for th
 	- Tag 1, 2, and 3 subtracts or adds points based on genre of recently selected books
       (1 being the most recent, 2 the second most, 3 the third most)
 - Click 'Save' to save config changes
+
+#### Notes
+
+- Cover scraping will take a moment when adding a book, but selected book navigation will be faster once cached

@@ -3,6 +3,7 @@ from utils.core.paths import resource_path
 # Define asset paths
 UP_ARROW_PATH = resource_path("assets/up_arrow.png").replace("\\", "/")
 DOWN_ARROW_PATH = resource_path("assets/down_arrow.png").replace("\\", "/")
+CHECK_MARK_PATH = resource_path("assets/check.png").replace("\\", "/")
 
 # Base theme settings for window and widgets
 BASE_THEME = """
@@ -229,9 +230,9 @@ CHECKBOX_STYLES = """
     
     QCheckBox::indicator:checked {
         background-color: #1565c0;
-        image: url("assets/check.png");
+        image: url("%s");
     }
-"""
+""" % (CHECK_MARK_PATH)
 #        
 
 # Combine all styles into the final DARK_THEME

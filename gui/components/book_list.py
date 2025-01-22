@@ -263,8 +263,8 @@ class BookListWidget(QWidget):
         super().closeEvent(event)
 
     def _setup_default_sorting(self):
-        self.unselected_table.sortItems(6, Qt.SortOrder.DescendingOrder)
-        self.selected_table.sortItems(6, Qt.SortOrder.DescendingOrder)
+        self.unselected_table.sortItems(7, Qt.SortOrder.DescendingOrder)
+        self.selected_table.sortItems(7, Qt.SortOrder.DescendingOrder)
 
     def _save_changes(self):
         profile = (
