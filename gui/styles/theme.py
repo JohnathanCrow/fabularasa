@@ -3,6 +3,8 @@ from utils.core.paths import resource_path
 # Define asset paths
 UP_ARROW_PATH = resource_path("assets/up_arrow.png").replace("\\", "/")
 DOWN_ARROW_PATH = resource_path("assets/down_arrow.png").replace("\\", "/")
+LEFT_ARROW_PATH = resource_path("assets/left_arrow.png").replace("\\", "/")
+RIGHT_ARROW_PATH = resource_path("assets/right_arrow.png").replace("\\", "/")
 CHECK_MARK_PATH = resource_path("assets/check.png").replace("\\", "/")
 
 # Base theme settings for window and widgets
@@ -103,14 +105,14 @@ CALENDAR_STYLES = """
         min-height: 40px;
     }
     QCalendarWidget #qt_calendar_prevmonth {
-        qproperty-icon: url(assets/left_arrow.png);
+        qproperty-icon: url("%s");
         min-width: 24px;
     }
     QCalendarWidget #qt_calendar_nextmonth {
-        qproperty-icon: url(assets/right_arrow.png);
+        qproperty-icon: url("%s");
         min-width: 24px;
     }
-"""
+""" % (LEFT_ARROW_PATH, RIGHT_ARROW_PATH)
 
 
 # SpinBox specific styles
