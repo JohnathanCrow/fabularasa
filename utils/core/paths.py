@@ -6,6 +6,11 @@ from pathlib import Path
 
 def get_base_dir() -> Path:
     """Get the base FabulaRasa directory."""
+    # Check for Render environment
+    if database_url := os.getenv('DATABASE_URL'):
+        return Path(database_url).parent
+        
+    # Local development paths
     if sys.platform == "win32":
         return Path(os.getenv("APPDATA")) / "FabulaRasa"
     elif sys.platform == "darwin":
@@ -30,6 +35,11 @@ def get_profiles_dir() -> Path:
 
 def get_data_dir(profile=None) -> str:
     """Get a specific profile's directory."""
+    # Check for Render environment
+    if database_url := os.getenv('DATABASE_URL'):
+        return str(Path(database_url).parent)
+        
+    # Local development paths
     profile = profile or "default"
     profile_dir = get_profiles_dir() / profile
     profile_dir.mkdir(parents=True, exist_ok=True)
@@ -38,6 +48,10 @@ def get_data_dir(profile=None) -> str:
 
 def get_file_path(filename: str, profile=None) -> str:
     """Get path for a profile-specific file."""
+    # Check for Render environment and database file
+    if filename == "books.db" and (database_url := os.getenv('DATABASE_URL')):
+        return database_url
+        
     return str(Path(get_data_dir(profile)) / filename)
 
 
@@ -48,6 +62,11 @@ def get_state_file_path(filename: str) -> str:
 
 def get_profiles() -> list:
     """Get list of available profiles."""
+    # In Render environment, only use default profile
+    if os.getenv('DATABASE_URL'):
+        return ["default"]
+        
+    # Local development profile handling
     profiles = []
     with contextlib.suppress(FileNotFoundError):
         profiles_dir = get_profiles_dir()

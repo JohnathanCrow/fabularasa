@@ -1,6 +1,7 @@
 import sqlite3
 from contextlib import contextmanager
 from typing import Any, Dict, Generator, List
+import os
 
 from utils.common.constants import DB_FILE
 
@@ -15,7 +16,13 @@ def get_db(profile=None) -> Generator[sqlite3.Connection, None, None]:
     Yields:
         sqlite3.Connection: Database connection object.
     """
-    conn = sqlite3.connect(get_file_path(DB_FILE, profile))
+    db_path = get_file_path(DB_FILE, profile)
+    
+    # Ensure the database directory exists
+    if not os.path.exists(os.path.dirname(db_path)):
+        os.makedirs(os.path.dirname(db_path))
+        
+    conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
 
     try:
