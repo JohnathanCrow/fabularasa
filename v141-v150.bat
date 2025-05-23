@@ -1,6 +1,0 @@
-@echo off
-echo Running database migration...
-python "%~dp0v141-v150.py"
-echo.
-echo Press any key to exit...
-pause >nul
