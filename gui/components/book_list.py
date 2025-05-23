@@ -11,9 +11,21 @@ from utils.core.db import read_db, write_db
 from utils.core.isbn import validate_isbn
 
 class TagItemDelegate(QStyledItemDelegate):
+    def __init__(self, table_widget, parent=None):
+        super().__init__(parent)
+        self.table_widget = table_widget
+    
     def createEditor(self, parent, option, index):
-        if index.column() == 3:  # Tags column
+        # Check if this is the tags column
+        if index.column() == 3:
             return None
+            
+        # Check if this is a date column by getting the header text
+        if self.table_widget:
+            header_item = self.table_widget.horizontalHeaderItem(index.column())
+            if header_item and header_item.text() in ["Date Added", "Read Date"]:
+                return None
+                
         return super().createEditor(parent, option, index)
 
 class TagEditorDialog(QDialog):
@@ -119,7 +131,7 @@ class BookTableItem(QTableWidgetItem):
                 self.original_text = value
                 self.tags_list = [tag.strip() for tag in value.split(",")] if value else []
                 tag_count = len(self.tags_list) if self.tags_list else 0
-                display_text = f"{tag_count} tags" if tag_count != 1 else "1 tag"
+                display_text = self.tags_list[0] if tag_count == 1 else f"{tag_count} tags"
                 super().setData(Qt.ItemDataRole.DisplayRole, display_text)
             elif role == Qt.ItemDataRole.UserRole:
                 # Store the full tags string for reference
@@ -167,6 +179,7 @@ class DateSelectionDialog(QDialog):
         self.setWindowTitle("Select Date")
         self.setModal(True)
         self.setMinimumWidth(300)
+        self.setMinimumHeight(300)
         
         layout = QVBoxLayout(self)
         
@@ -206,10 +219,6 @@ def create_book_table(include_date_added=False, include_read_date=False):
     table = QTableWidget()
     table.verticalHeader().setVisible(False)
 
-    # Set the custom delegate
-    delegate = TagItemDelegate(table)
-    table.setItemDelegate(delegate)
-
     headers = ["Title", "Author", "ISBN", "Tags", "Words", "Rating", "Member"]
     if include_date_added:
         headers.append("Date Added")
@@ -219,6 +228,10 @@ def create_book_table(include_date_added=False, include_read_date=False):
     table.setColumnCount(len(headers))
     table.setHorizontalHeaderLabels(headers)
     table.setSortingEnabled(True)
+
+    # Set the custom delegate - now passing the table widget reference
+    delegate = TagItemDelegate(table)
+    table.setItemDelegate(delegate)
 
     header = table.horizontalHeader()
     for i in range(len(headers)):
